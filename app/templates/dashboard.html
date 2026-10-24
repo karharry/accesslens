@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "macros.html" import filterbar, toptable, sourcetabs, srcpill %}
+{% block title %}Dashboard · AccessLens{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+{{ filterbar("/", f, None, None, False) }}
+{{ sourcetabs("/", f) }}
+
+<div class="panels">
+{% for p in panels %}
+  <div class="card panel s-{{ p.key }} {{ 'sel' if f.source == p.key }}">
+    <h3><i class="sdot s-{{ p.key }}"></i>{{ p.name }}</h3>
+    <p class="muted small">{{ p.desc }}</p>
+    <div class="big">{{ p.d.n | num }} <small>{{ p.unit }}</small></div>
+    <div class="small">{{ p.d.clients | num }} clients ·
+      <span class="pill net-lan">LAN {{ p.d.lan | num }}</span>
+      <span class="pill net-tailscale">Tailscale {{ p.d.tailscale | num }}</span>
+      <span class="pill net-internet">Internet {{ p.d.internet | num }}</span></div>
+    <div class="small muted">Last event: {{ p.d.last_seen | ago }}{% if p.d.errors %} · <span class="bad">{{ p.d.errors | num }} errors</span>{% endif %}</div>
+    {% if p.top %}<table class="t compact">{% for r in p.top %}<tr><td class="clip" title="{{ r.v }}">{{ r.v }}</td><td class="r">{{ r.requests | num }}</td></tr>{% endfor %}</table>
+    {% else %}<p class="muted small">No data in this time range.</p>{% endif %}
+    <div class="small status">{{ p.status }}</div>
+    <a class="small" href="/?{{ qs(f, source=p.key) }}">Only this source →</a> ·
+    <a class="small" href="/events?{{ qs(f, source=p.key) }}">events</a>
+  </div>
+{% endfor %}
+</div>
+
+<div class="kpis">
+  <div class="kpi"><b>{{ s.total | num }}</b><span>{{ 'Connections' if f.source == 'connection' else ('Requests' if f.source else 'Events (all sources)') }}</span></div>
+  <div class="kpi"><b>{{ s.ips | num }}</b><span>Unique clients</span></div>
+  <div class="kpi"><b>{{ s.local | num }}</b><span>Local requests</span></div>
+  <div class="kpi"><b>{{ s.remote | num }}</b><span>Remote requests <small>({{ s.remote_ips | num }} IPs)</small></span></div>
+  <div class="kpi {{ 'warn' if s.total and s.errors * 10 > s.total }}"><b>{{ s.errors | num }}</b><span>Errors (4xx/5xx)</span></div>
+  <div class="kpi"><b>{{ s.services | num }}</b><span>Services hit</span></div>
+  <div class="kpi"><b>{{ s.bytes | nbytes }}</b><span>Transferred</span></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Traffic over time <span class="legend"><i class="c-local"></i>local <i class="c-remote"></i>remote</span></h3>
+    <div id="ts-chart" class="chart" data-qs="{{ qs(f) }}"></div>
+  </div>
+  <div class="card" id="live" data-src='{{ SRC_SHORT | tojson }}'>
+    <h3><span class="dot"></span> Live <small class="muted">last 30 min, per minute</small></h3>
+    <div id="live-chart" class="chart small"></div>
+    <div class="muted small" id="live-sum">…</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Latest requests <a class="small" href="/events">all events →</a></h3>
+  <div class="scroll"><table class="t compact" id="live-table">
+    <thead><tr><th>Time</th><th>Source</th><th>Service</th><th>Client</th><th>Network</th><th>Device / app</th><th>Request</th><th>St.</th></tr></thead>
+    <tbody></tbody></table></div>
+</div>
+
+<div class="grid3">
+  {{ toptable("Network path", nets, "network", f, "Path") }}
+  {{ toptable("Top services", top.service, "service", f, "Service") }}
+  {{ toptable("Top clients", top.client, "client", f, "Client") }}
+  {{ toptable("Categories", top.category, "category", f, "Category") }}
+  {{ toptable("Devices", top.device, "device", f, "Device") }}
+  {{ toptable("Apps / browsers", top.app, "app", f, "App") }}
+  {{ toptable("Countries", top.country, "country", f, "Country") }}
+</div>
+
+<div class="card">
+  <h3>When is it busy? <small class="muted">weekday × hour ({{ f.range }})</small></h3>
+  {% set mx = heat | map('max') | max %}
+  <div class="heat">
+    <div></div>{% for h in range(24) %}<span class="hl">{{ h }}</span>{% endfor %}
+    {% for row in heat %}
+      {% set day = weekdays[loop.index0] %}
+      <span class="dl">{{ day }}</span>
+      {% for n in row %}<i style="--v: {{ (n / mx) if mx else 0 }}" title="{{ day }} {{ loop.index0 }}:00 – {{ n | num }} requests"></i>{% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

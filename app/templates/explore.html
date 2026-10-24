@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "macros.html" import filterbar, sourcetabs %}
+{% block title %}Explore · AccessLens{% endblock %}
+{% block content %}
+<h1>Explore
+  <a class="btn ghost sm right" href="/export/explore.csv?{{ qs(f, dim=dim) }}">⬇ Export CSV</a></h1>
+<div class="tabs">
+  {% for k, v in DIMS.items() if k not in ('hour', 'weekday') %}<a href="/explore?{{ qs(f, dim=k) }}" class="{{ 'on' if k == dim }}">{{ v[0] }}</a>{% endfor %}
+  <a href="/explore?{{ qs(f, dim='hour') }}" class="{{ 'on' if dim == 'hour' }}">By hour</a>
+  <a href="/explore?{{ qs(f, dim='weekday') }}" class="{{ 'on' if dim == 'weekday' }}">By weekday</a>
+</div>
+{{ sourcetabs("/explore", f, {'dim': dim}) }}
+{{ filterbar("/explore", f, opts, {'dim': dim}) }}
+<div class="card scroll">
+<table class="t">
+  <thead><tr>
+    <th>{{ DIMS[dim][0] }}</th>
+    <th class="r"><a href="/explore?{{ qs(f, dim=dim, order='requests') }}">Requests</a></th><th class="r">Share</th>
+    <th class="r"><a href="/explore?{{ qs(f, dim=dim, order='clients') }}">Clients</a></th>
+    {% if dim != 'service' %}<th class="r">Services</th>{% endif %}
+    <th class="r">Local %</th>
+    <th class="r"><a href="/explore?{{ qs(f, dim=dim, order='errors') }}">Errors</a></th>
+    <th class="r">Traffic</th><th>First seen</th><th><a href="/explore?{{ qs(f, dim=dim, order='last') }}">Last seen</a></th></tr></thead>
+  {% for r in rows %}
+  <tr>
+    <td class="clip">
+      {% if dim in ('service','ip','device','app','os','country','category','source','network') %}
+        <a href="/events?{{ qs(f, **{dim: r.v}) }}">{{ r.v }}</a>
+      {% elif dim == 'client' %}{{ r.v }}
+      {% elif dim == 'weekday' %}{{ weekdays[(r.v | int - 1) % 7] }}
+      {% else %}{{ r.v }}{% endif %}
+      {% if r.alias and dim == 'ip' %}<small class="muted">{{ r.alias }}</small>{% endif %}
+    </td>
+    <td class="r">{{ r.requests | num }}</td>
+    <td class="r"><div class="bar"><i style="width: {{ (100 * r.requests / grand) | round(1) }}%"></i></div> {{ (100 * r.requests / grand) | round(1) }}%</td>
+    <td class="r">{{ r.clients | num }}</td>
+    {% if dim != 'service' %}<td class="r">{{ r.services }}</td>{% endif %}
+    <td class="r">{{ (100 * r.local / r.requests) | round | int if r.requests else 0 }}%</td>
+    <td class="r {{ 'bad' if r.errors }}">{{ r.errors | num }}</td>
+    <td class="r nowrap">{{ r.bytes | nbytes }}</td>
+    <td class="nowrap">{{ r.first_seen | dt }}</td><td class="nowrap">{{ r.last_seen | dt }}</td>
+  </tr>
+  {% else %}<tr><td colspan="10" class="muted">No data for this selection.</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

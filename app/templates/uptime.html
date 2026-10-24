@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Uptime · AccessLens{% endblock %}
+{% block content %}
+<h1>Uptime</h1>
+<div class="card scroll">
+<table class="t">
+  <thead><tr><th>Probe</th><th>Status</th><th>Last check</th><th class="r">Latency (24h avg)</th><th class="r">24 h</th><th class="r">7 d</th><th>Recent checks</th></tr></thead>
+  {% for it in uptime_items %}
+  <tr>
+    <td><b>{{ it.probe.name }}</b><br><small class="muted clip">{{ it.probe.url }}</small></td>
+    <td>{% if not it.last %}<span class="pill">pending</span>
+        {% elif it.last.ok %}<span class="pill local">up · {{ it.last.status }}</span>
+        {% else %}<span class="pill down">down{% if it.last.error %} · {{ it.last.error[:50] }}{% endif %}</span>{% endif %}</td>
+    <td>{{ it.last.ts | ago if it.last else '–' }}</td>
+    <td class="r">{{ '%.0f ms' % it.ms if it.ms else '–' }}</td>
+    <td class="r">{{ '%.2f%%' % it.up24 if it.up24 is not none else '–' }}</td>
+    <td class="r">{{ '%.2f%%' % it.up7 if it.up7 is not none else '–' }}</td>
+    <td><span class="spark">{% for ok in it.recent %}<i class="{{ 'u' if ok else 'd' }}"></i>{% endfor %}</span></td>
+  </tr>
+  {% else %}<tr><td colspan="7" class="muted">No probes yet. Add one in Settings → Uptime probes.</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

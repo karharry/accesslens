@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "macros.html" import filterbar, sourcetabs, srcpill, netpill %}
+{% block title %}Events · AccessLens{% endblock %}
+{% block content %}
+<h1>Events <small class="muted">{{ total | num }} matching</small>
+  <a class="btn ghost sm right" href="/export/events.csv?{{ qs(f) }}">⬇ Export CSV</a></h1>
+{{ sourcetabs("/events", f) }}
+{{ filterbar("/events", f, opts) }}
+<div class="card scroll">
+<table class="t compact">
+  <thead><tr><th>Time</th><th>Source</th><th>Service</th><th>Client</th><th>Network</th><th>Device</th><th>App</th><th>Request</th><th>St.</th><th class="r">Size</th></tr></thead>
+  {% for e in rows %}
+  <tr>
+    <td class="nowrap">{{ e.ts | dt }}</td>
+    <td>{{ srcpill(e.source) }}</td>
+    <td><a href="/events?{{ qs(f, service=e.service) }}">{{ e.service }}</a></td>
+    <td class="nowrap"><a href="/events?{{ qs(f, ip=e.ip) }}">{{ e.ip }}</a>{% if e.alias %} <small class="muted">{{ e.alias }}</small>{% endif %}</td>
+    <td>{{ netpill(e) }}</td>
+    <td>{{ e.device }}</td><td>{{ e.app }}</td>
+    <td class="clip" title="{{ e.ua }}"><b>{{ e.method }}</b> {{ e.path }}{% if e.count > 1 %} <small class="muted">×{{ e.count }}</small>{% endif %}</td>
+    <td><span class="st s{{ e.status // 100 }}">{{ e.status or '–' }}</span></td>
+    <td class="r nowrap">{{ e.bytes | nbytes if e.bytes else '–' }}</td>
+  </tr>
+  {% else %}<tr><td colspan="11" class="muted">No events match. Check Settings → Log sources if this is a fresh install.</td></tr>{% endfor %}
+</table>
+</div>
+<div class="pager">
+  {% if page_n > 1 %}<a class="btn ghost sm" href="/events?{{ qs(f, page=page_n - 1) }}">← Newer</a>{% endif %}
+  <span class="muted">Page {{ page_n }} / {{ pages }}</span>
+  {% if page_n < pages %}<a class="btn ghost sm" href="/events?{{ qs(f, page=page_n + 1) }}">Older →</a>{% endif %}
+</div>
+{% endblock %}

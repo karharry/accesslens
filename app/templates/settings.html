@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Settings · AccessLens{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<p class="muted">{{ dbstat.n | num }} events stored{% if dbstat.a %} ({{ dbstat.a | dt }} → {{ dbstat.b | dt }}){% endif %} · database {{ dbsize | nbytes }} · timezone <code>{{ tz }}</code></p>
+
+<form method="post" action="/settings/general" class="card">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3>Log sources &amp; filtering</h3>
+  <label>Log sources <small class="muted">one per line: <code>format|service label|path or glob</code>. Format is <code>npm</code>, <code>combined</code> (nginx/Apache) or <code>auto</code>. The label is only used for <code>combined</code> (NPM logs carry the host name). Rotated <code>.N.gz</code> files are imported once, on first start.</small>
+    <textarea name="log_sources" rows="4" spellcheck="false">{{ s.log_sources }}</textarea></label>
+  <label>Local networks <small class="muted">comma-separated CIDRs; clients inside these count as "local" (LAN or Tailscale). Cloudflare-sourced traffic is always Internet.</small>
+    <input name="local_cidrs" value="{{ s.local_cidrs }}"></label>
+  <label>Tailscale networks <small class="muted">clients inside these are labelled "Tailscale" instead of "LAN".</small>
+    <input name="tailscale_cidrs" value="{{ s.tailscale_cidrs }}"></label>
+  <div class="cols3">
+    <label>Ignore IPs <small class="muted">one per line</small><textarea name="ignore_ips" rows="3">{{ s.ignore_ips }}</textarea></label>
+    <label>Ignore path prefixes <small class="muted">e.g. /healthz</small><textarea name="ignore_paths" rows="3">{{ s.ignore_paths }}</textarea></label>
+    <label>Ignore services <small class="muted">host names</small><textarea name="ignore_services" rows="3">{{ s.ignore_services }}</textarea></label>
+  </div>
+  <label>Retention (days, 0 = keep forever) <input type="number" name="retention_days" value="{{ s.retention_days }}" min="0" style="max-width:8rem"></label>
+  <button class="btn">Save</button>
+</form>
+
+<form method="post" action="/settings/connections" class="card">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3><i class="sdot s-connection"></i>Direct connections (host ports)</h3>
+  <p class="muted small">Records TCP connections made straight to this host's IP addresses (LAN or Tailscale <code>ip:port</code>), i.e. traffic that never passes through NPM.
+  Reads the kernel connection table, so it needs <code>network_mode: host</code> and <code>cap_add: [DAC_READ_SEARCH]</code>. Only connection counts are available: no path, status or user-agent.</p>
+  <p class="small">Status: <b>{{ s.conn_status or 'starting…' }}</b></p>
+  <label class="check"><input type="checkbox" name="conn_enabled" value="1" {{ 'checked' if s.conn_enabled == '1' }}> Enable direct-connection monitor</label>
+  <div class="cols3">
+    <label>Protocols <small class="muted">tcp, udp or tcp,udp (UDP is noisy: DNS, mDNS…)</small><input name="conn_protocols" value="{{ s.conn_protocols }}"></label>
+    <label>Ignore destination ports <small class="muted">comma-separated; 80,443 are already covered by NPM</small><input name="conn_ports_ignore" value="{{ s.conn_ports_ignore }}"></label>
+    <label>Only these ports <small class="muted">optional allow-list; empty = all ports</small><input name="conn_ports_only" value="{{ s.conn_ports_only }}"></label>
+    <label>Poll interval (s) <input type="number" name="conn_poll" min="2" max="60" value="{{ s.conn_poll }}"></label>
+    <label>Host IPs <small class="muted">empty = auto-detect. Detected: {{ s.detected_hosts | join(', ') or 'none' }}</small><input name="conn_host_ips" value="{{ s.conn_host_ips }}"></label>
+    <label>Ignore sources (CIDRs) <small class="muted">Docker bridges are ignored automatically{% if s.detected_docker %} ({{ s.detected_docker | length }} found){% endif %}</small><input name="conn_ignore_src" value="{{ s.conn_ignore_src }}"></label>
+  </div>
+  <label>Port labels <small class="muted"><code>port,service name</code> per line, e.g. <code>9090,Navidrome</code>. Unlabelled ports show as "port N".</small>
+    <textarea name="conn_labels" rows="5" spellcheck="false">{{ s.conn_labels }}</textarea></label>
+  <button class="btn">Save</button>
+</form>
+
+<form method="post" action="/settings/labels" class="card">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3>Device names &amp; service categories</h3>
+  <div class="grid2">
+    <label>Name your clients <small class="muted"><code>ip,name</code> per line, e.g. <code>192.168.1.50,Living-room TV</code></small>
+      <textarea name="aliases" rows="8" spellcheck="false">{{ labels.aliases }}</textarea></label>
+    <label>Service categories <small class="muted"><code>service,category</code> per line. New services are auto-categorised; edit freely.</small>
+      <textarea name="categories" rows="8" spellcheck="false">{{ labels.categories }}</textarea></label>
+  </div>
+  <button class="btn">Save</button>
+</form>
+
+<div class="card">
+  <h3>Cloudflare tunnel traffic</h3>
+  <p class="muted small">Tunnelled services never pass through NPM, so remote traffic is pulled from Cloudflare's GraphQL Analytics API.
+  Create an API token (My Profile → API Tokens) with <b>Account Analytics: Read</b> and <b>Zone: Read</b> (or <b>Zone Analytics: Read</b>) permissions. Free plans keep roughly one day of detailed data, so it is polled continuously.</p>
+  <form method="post" action="/settings/cloudflare">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>API token {% if s.cf_token_set %}<span class="pill local">set</span>{% endif %}
+      <input name="cf_token" type="password" autocomplete="off" placeholder="{{ 'leave blank to keep the stored token' if s.cf_token_set else 'paste token' }}"></label>
+    <label>Zone IDs <small class="muted">one per line (<code>id</code> or <code>id:name</code>); use "Discover zones" to fill automatically</small>
+      <textarea name="cf_zones" rows="3" spellcheck="false">{{ s.cf_zones }}</textarea></label>
+    <label>Poll interval (seconds) <input type="number" name="cf_interval" value="{{ s.cf_interval }}" min="60" style="max-width:8rem"></label>
+    <button class="btn">Save</button>
+  </form>
+  <div class="row">
+    <form method="post" action="/settings/cloudflare/discover"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost">Discover zones</button></form>
+    <form method="post" action="/settings/cloudflare/poll"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost">Poll now</button></form>
+    {% if s.cf_token_set %}<form method="post" action="/settings/cloudflare/clear" data-confirm="Remove the stored Cloudflare token?"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn danger">Remove token</button></form>{% endif %}
+  </div>
+  {% if s.cf_status %}<p class="muted small">Last status: {{ s.cf_status }}</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>Weekly email report</h3>
+  <form method="post" action="/settings/email">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="cols3">
+      <label>SMTP host <input name="smtp_host" value="{{ s.smtp_host }}" placeholder="smtp.gmail.com"></label>
+      <label>Port <input type="number" name="smtp_port" value="{{ s.smtp_port }}"></label>
+      <label>Security <select name="smtp_security">
+        {% for v, l in [('starttls','STARTTLS (587)'),('ssl','SSL/TLS (465)'),('none','None')] %}<option value="{{ v }}" {{ 'selected' if s.smtp_security == v }}>{{ l }}</option>{% endfor %}</select></label>
+      <label>SMTP user <input name="smtp_user" value="{{ s.smtp_user }}" autocomplete="off"></label>
+      <label>SMTP password {% if s.smtp_pass_set %}<span class="pill local">set</span>{% endif %}<input name="smtp_pass" type="password" autocomplete="new-password" placeholder="{{ 'leave blank to keep' if s.smtp_pass_set }}"></label>
+      <label>From address <input name="mail_from" value="{{ s.mail_from }}" placeholder="accesslens@example.com"></label>
+    </div>
+    <label>Send to <small class="muted">comma-separated</small> <input name="mail_to" value="{{ s.mail_to }}"></label>
+    <div class="row">
+      <label class="check"><input type="checkbox" name="report_enabled" value="1" {{ 'checked' if s.report_enabled == '1' }}> Send weekly report</label>
+      <label>on <select name="report_day">{% for d in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}<option value="{{ loop.index0 }}" {{ 'selected' if s.report_day == loop.index0 | string }}>{{ d }}</option>{% endfor %}</select></label>
+      <label>after <input type="number" name="report_hour" min="0" max="23" value="{{ s.report_hour }}" style="max-width:5rem"> :00</label>
+    </div>
+    <button class="btn">Save</button>
+  </form>
+  <div class="row">
+    <form method="post" action="/settings/email/test"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost">Send test email</button></form>
+    <form method="post" action="/settings/email/report"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="which" value="last_week"><button class="btn ghost">Send last week's report now</button></form>
+    <form method="post" action="/settings/email/report"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="which" value="last_7d"><button class="btn ghost">Send last 7 days now</button></form>
+  </div>
+  {% if s.report_error %}<p class="bad small">Last scheduled report: {{ s.report_error }}</p>{% endif %}
+  <p class="muted small">The report covers the previous Monday–Sunday. The SMTP password is stored in the database inside your config folder (readable only by the container user).</p>
+</div>
+
+<div class="card">
+  <h3>Uptime probes</h3>
+  <table class="t compact">
+    {% for p in probes %}<tr><td>{{ p.name }}</td><td class="clip">{{ p.url }}</td><td>{{ p.interval_s }}s</td>
+      <td><form method="post" action="/settings/probes/delete" class="inline" data-confirm="Delete probe '{{ p.name }}'?"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ p.id }}"><button class="btn danger sm">Delete</button></form></td></tr>
+    {% else %}<tr><td class="muted">No probes configured.</td></tr>{% endfor %}
+  </table>
+  <form method="post" action="/settings/probes/add" class="row">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Name <input name="name" required size="14"></label>
+    <label>URL <input name="url" required size="34" placeholder="https://home.example.com"></label>
+    <label>Every (s) <input type="number" name="interval_s" value="60" min="10" style="max-width:6rem"></label>
+    <label class="check"><input type="checkbox" name="verify_tls" value="1" checked> verify TLS</label>
+    <button class="btn">Add probe</button>
+  </form>
+  <p class="muted small">Any HTTP response below 500 counts as "up" (login-protected apps answer 401/403).</p>
+</div>
+
+<div class="card">
+  <h3>Ingest API</h3>
+  <p class="muted small">Other tools can push events: <code>POST /api/ingest</code> with <code>Authorization: Bearer &lt;token&gt;</code> and a JSON object or list with
+  <code>service, ip, method, path, status, user_agent, bytes, country, ts</code> (all but <code>ip</code> optional).</p>
+  <label>Token <input value="{{ s.api_token }}" readonly></label>
+  <form method="post" action="/settings/token" data-confirm="Generate a new token? The old one stops working."><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost">Regenerate token</button></form>
+</div>
+
+<div class="card">
+  <h3>Danger zone</h3>
+  <form method="post" action="/settings/purge" class="row" data-confirm="Delete ALL stored events?">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Type <code>DELETE</code> to wipe all events <input name="confirm" autocomplete="off" size="10"></label>
+    <button class="btn danger">Delete all events</button>
+  </form>
+</div>
+{% endblock %}

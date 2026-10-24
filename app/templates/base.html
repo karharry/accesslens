@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}AccessLens{% endblock %}</title>
+<link rel="icon" href="/static/icon.svg">
+<script src="/static/theme.js?v={{ version }}"></script>
+<link rel="stylesheet" href="/static/style.css?v={{ version }}">
+</head>
+<body>
+{% if user %}
+<aside class="side">
+  <div class="side-top">
+    <div class="brand"><img src="/static/icon.svg" width="26" height="26" alt=""> AccessLens</div>
+    <button type="button" class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false">☰</button>
+  </div>
+  <nav>
+    {% set items = [('dashboard','/','Dashboard'),('events','/events','Events'),('explore','/explore','Explore'),
+       ('aggregate','/aggregate','Aggregate'),('insights','/insights','Insights'),('uptime','/uptime','Uptime')] %}
+    {% for k, href, label in items %}<a href="{{ href }}" class="{{ 'on' if page == k }}">{{ label }}</a>{% endfor %}
+    {% if user.role == 'admin' %}<hr>
+    <a href="/users" class="{{ 'on' if page == 'users' }}">Users</a>
+    <a href="/settings" class="{{ 'on' if page == 'settings' }}">Settings</a>{% endif %}
+    <a href="/account" class="{{ 'on' if page == 'account' }}">My account</a>
+  </nav>
+  <form method="post" action="/logout" class="who">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <span>{{ user.username }} <small class="muted">({{ user.role }})</small></span>
+    <button class="btn ghost sm">Log out</button>
+  </form>
+  <div class="theme-switch{{ ' float' if not user }}" role="group" aria-label="Theme">
+  <button type="button" data-theme-set="system">System</button><button type="button" data-theme-set="light">Light</button><button type="button" data-theme-set="dark">Dark</button>
+</div>
+  <div class="ver muted">v{{ version }}</div>
+</aside>
+{% endif %}
+{% if not user %}<div class="theme-switch{{ ' float' if not user }}" role="group" aria-label="Theme">
+  <button type="button" data-theme-set="system">System</button><button type="button" data-theme-set="light">Light</button><button type="button" data-theme-set="dark">Dark</button>
+</div>{% endif %}
+<main class="{{ 'with-side' if user }}">
+  {% if default_pw %}<div class="flash warn">You are still using the generated initial password. <a href="/account">Change it</a>.</div>{% endif %}
+  {% if msg %}<div class="flash {{ 'ok' if ok else 'bad' }}">{{ msg }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<script src="/static/app.js?v={{ version }}"></script>
+</body>
+</html>

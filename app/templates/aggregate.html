@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import filterbar, sourcetabs %}
+{% block title %}Aggregate · AccessLens{% endblock %}
+{% block content %}
+<h1>Aggregate
+  <a class="btn ghost sm right" href="/export/aggregate.csv?{{ qs(f, dim=dim, bucket=bucket) }}">⬇ Export CSV</a></h1>
+<p class="muted">Requests grouped by a dimension (rows) and a time bucket (columns). Top 12 values shown; the CSV contains all.</p>
+{{ sourcetabs("/aggregate", f, {'dim': dim, 'bucket': bucket}) }}
+<form method="get" action="/aggregate" class="filters">
+  {% if f.source %}<input type="hidden" name="source" value="{{ f.source }}">{% endif %}
+  <label>Rows <select name="dim">{% for k, v in DIMS.items() if k not in ('hour', 'weekday') %}<option value="{{ k }}" {{ 'selected' if k == dim }}>{{ v[0] }}</option>{% endfor %}</select></label>
+  <label>Columns <select name="bucket">{% for b in buckets_all %}<option value="{{ b }}" {{ 'selected' if b == bucket }}>per {{ b }}</option>{% endfor %}</select></label>
+  <label>Range <select name="range">{% for r in RANGES %}<option {{ 'selected' if f.range == r }}>{{ r }}</option>{% endfor %}</select></label>
+  <label>Network <select name="network"><option value="">all</option>{% for o in ['LAN','Tailscale','Internet'] %}<option {{ 'selected' if f.network == o }}>{{ o }}</option>{% endfor %}</select></label>
+  <label>Service <input name="service" value="{{ f.service }}" size="14"></label>
+  <button class="btn">Apply</button>
+</form>
+<div class="card scroll">
+{% if tops %}
+{% set mx = namespace(v=1) %}{% for t in tops %}{% for b in buckets %}{% set n = data[t].get(b, 0) %}{% if n > mx.v %}{% set mx.v = n %}{% endif %}{% endfor %}{% endfor %}
+<table class="t compact matrix">
+  <thead><tr><th>{{ DIMS[dim][0] }}</th>{% for b in buckets %}<th class="r">{{ b }}</th>{% endfor %}<th class="r">Total</th></tr></thead>
+  {% for t in tops %}
+  <tr><td class="clip">{{ t }}</td>
+    {% for b in buckets %}{% set n = data[t].get(b, 0) %}<td class="r cell" style="--v: {{ n / mx.v }}">{{ n | num if n else '' }}</td>{% endfor %}
+    <td class="r"><b>{{ data[t].values() | sum | num }}</b></td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="muted">No data for this selection.</p>{% endif %}
+</div>
+{% endblock %}

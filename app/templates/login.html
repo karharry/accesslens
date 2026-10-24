@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Sign in · AccessLens{% endblock %}
+{% block content %}
+<div class="login card">
+  <h1><img src="/static/icon.svg" width="34" height="34" alt=""> AccessLens</h1>
+  {% if error %}<div class="flash bad">{{ error }}</div>{% endif %}
+  <form method="post" action="/login">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label>Username <input name="username" autocomplete="username" autofocus required></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn full">Sign in</button>
+  </form>
+  <p class="muted small">First run? The generated admin password is printed in the container log
+  (<code>docker logs accesslens</code>) and saved as <code>initial-admin-password.txt</code> in the config folder.</p>
+</div>
+{% endblock %}

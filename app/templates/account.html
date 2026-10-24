@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}My account · AccessLens{% endblock %}
+{% block content %}
+<h1>My account</h1>
+<div class="grid2">
+<div class="card">
+  <h3>Change password</h3>
+  <form method="post" action="/account/password">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Current password <input name="current" type="password" required autocomplete="current-password"></label>
+    <label>New password <input name="new" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label>Confirm new password <input name="confirm" type="password" required minlength="8" autocomplete="new-password"></label>
+    <button class="btn">Change password</button>
+  </form>
+  <p class="muted small">Changing your password signs out your other sessions.</p>
+</div>
+<div class="card">
+  <h3>Username</h3>
+  <form method="post" action="/account/rename">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Username <input name="username" value="{{ user.username }}" required minlength="2" maxlength="40"></label>
+    <button class="btn">Rename</button>
+  </form>
+</div>
+</div>
+{% endblock %}

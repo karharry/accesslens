@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "macros.html" import filterbar, sourcetabs, srcpill, netpill %}
+{% block title %}Insights · AccessLens{% endblock %}
+{% block content %}
+<h1>Insights</h1>
+{{ sourcetabs("/insights", f) }}
+{{ filterbar("/insights", f, None, None, False) }}
+
+{% if i.docker_nat %}
+<div class="flash warn"><b>{{ i.docker_nat | num }}</b> requests came from a Docker bridge gateway address (172.x.0.1). The real client IP is hidden by Docker NAT
+for those requests, so they all look like one local client. Publishing the proxy port with <code>network_mode: host</code> or enabling
+<code>userland-proxy: false</code> typically preserves the real source IP.</div>
+{% endif %}
+
+<div class="grid2">
+<div class="card"><h3>New clients <small class="muted">first ever seen in this range</small></h3>
+<table class="t compact"><tr><th>IP</th><th>Source</th><th>Network</th><th>App</th><th class="r">Events</th><th class="r">Svcs</th><th>First seen</th></tr>
+{% for r in i.new_ips %}<tr><td><a href="/events?ip={{ r.ip }}&range=all">{{ r.ip }}</a></td>
+<td>{{ srcpill(r.source) }}</td><td>{{ netpill(r) }}</td>
+<td>{{ r.app }}</td><td class="r">{{ r.requests | num }}</td><td class="r">{{ r.services }}</td><td>{{ r.first_seen | ago }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No new clients.</td></tr>{% endfor %}</table></div>
+
+<div class="card"><h3>Suspicious clients <small class="muted">≥10 denied (401/403) or ≥25 not-found</small></h3>
+<table class="t compact"><tr><th>IP</th><th>Where</th><th class="r">Req.</th><th class="r">Denied</th><th class="r">404</th><th class="r">Svcs</th></tr>
+{% for r in i.suspicious %}<tr><td><a href="/events?ip={{ r.ip }}&{{ qs(f) }}">{{ r.ip }}</a></td>
+<td>{{ netpill(r) }}</td>
+<td class="r">{{ r.requests | num }}</td><td class="r bad">{{ r.denied | num }}</td><td class="r">{{ r.notfound | num }}</td><td class="r">{{ r.services }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">Nothing suspicious.</td></tr>{% endfor %}</table></div>
+
+<div class="card"><h3>Remote clients touching many services <small class="muted">≥4</small></h3>
+<table class="t compact"><tr><th>IP</th><th>Country</th><th class="r">Requests</th><th class="r">Services</th></tr>
+{% for r in i.wide_remote %}<tr><td><a href="/events?ip={{ r.ip }}&{{ qs(f) }}">{{ r.ip }}</a></td><td>{{ r.country or '–' }}</td>
+<td class="r">{{ r.requests | num }}</td><td class="r">{{ r.services }}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</table></div>
+
+<div class="card"><h3>Services with &gt;10% errors</h3>
+<table class="t compact"><tr><th>Service</th><th class="r">Requests</th><th class="r">Errors</th><th class="r">Rate</th></tr>
+{% for r in i.error_services %}<tr><td><a href="/events?service={{ r.service }}&status=err&{{ qs(f) }}">{{ r.service }}</a></td>
+<td class="r">{{ r.requests | num }}</td><td class="r bad">{{ r.errors | num }}</td><td class="r">{{ (100 * r.errors / r.requests) | round | int }}%</td></tr>
+{% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</table></div>
+</div>
+
+<div class="card"><h3>Gone quiet <small class="muted">services with no traffic for 7+ days</small></h3>
+<table class="t compact"><tr><th>Service</th><th>Source</th><th>Last seen</th><th class="r">Total requests</th></tr>
+{% for r in i.quiet %}<tr><td>{{ r.service }}</td><td>{{ srcpill(r.source) }}</td><td>{{ r.last_seen | dt }} ({{ r.last_seen | ago }})</td><td class="r">{{ r.requests | num }}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">All services have recent traffic.</td></tr>{% endfor %}</table></div>
+{% endblock %}

@@ -1,0 +1,18 @@
+# AccessLens - example compose file. Copy to docker-compose.yml and adjust the marked lines.
+services:
+  accesslens:
+    image: karharry/accesslens:latest      # <- your Docker Hub image
+    container_name: accesslens
+    restart: unless-stopped
+    user: "1000:1000"                                  # <- your host UID:GID (run `id` to check)
+    network_mode: host                                 # required for the direct-connection monitor; UI listens on PORT (8089)
+    cap_drop: [ALL]
+    cap_add: [DAC_READ_SEARCH]                         # read-only access to the host connection table (nothing else)
+    environment:
+      TZ: Europe/Athens                                # <- your timezone (reports, "busy hours")
+      # PORT: 8089                                     # UI port (host networking: no port mapping needed)
+      # BIND: 0.0.0.0                                  # e.g. 192.168.1.201 to listen on one address only
+    volumes:
+      - ./config:/config                               # database, secret key, settings; create it as your user first
+      - /path/to/npm/data/logs:/logs/npm:ro            # <- NPM access logs, read-only (optional)
+      # - /var/log/nginx:/logs/nginx:ro                # any other logs; then add a matching line in Settings -> Log sources

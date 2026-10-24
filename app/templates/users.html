@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Users · AccessLens{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<div class="card scroll">
+<table class="t">
+  <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Last login</th><th>Actions</th></tr></thead>
+  {% for u in users %}
+  <tr>
+    <td><b>{{ u.username }}</b>{% if u.id == user.id %} <span class="pill">you</span>{% endif %}</td>
+    <td>{{ u.role }}</td><td>{{ u.created_at | dt }}</td><td>{{ u.last_login | dt if u.last_login else 'never' }}</td>
+    <td class="actions">
+      <form method="post" action="/users/reset" class="inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ u.id }}">
+        <input type="password" name="password" placeholder="new password" minlength="8" required size="14">
+        <button class="btn ghost sm">Reset password</button></form>
+      {% if u.id != user.id %}
+      <form method="post" action="/users/delete" class="inline" data-confirm="Delete user '{{ u.username }}'? This cannot be undone.">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ u.id }}">
+        <button class="btn danger sm">Delete</button></form>
+      {% else %}<small class="muted">log in as another admin to delete this account</small>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+<div class="card narrow">
+  <h3>Create user</h3>
+  <form method="post" action="/users/create">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Username <input name="username" required minlength="2" maxlength="40" autocomplete="off"></label>
+    <label>Password <input name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label>Role <select name="role"><option value="admin">admin – full access</option><option value="viewer">viewer – dashboards and exports only</option></select></label>
+    <button class="btn">Create user</button>
+  </form>
+</div>
+<p class="muted small">Any admin can delete any other user, including the original <code>admin</code>. You can't delete the account you're signed in with.</p>
+{% endblock %}

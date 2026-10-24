@@ -1,0 +1,48 @@
+{% macro sourcetabs(action, f, extra={}) %}
+<div class="tabs srctabs">
+  <a href="{{ action }}?{{ qs(f, source='', **extra) }}" class="{{ 'on' if not f.source }}">All sources</a>
+  {% for k, v in SRC.items() %}<a href="{{ action }}?{{ qs(f, source=k, **extra) }}" class="{{ 'on' if f.source == k }}"><i class="sdot s-{{ k }}"></i>{{ v[0] }}</a>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro srcpill(k) %}<span class="pill src s-{{ k }}" title="{{ SRC[k][0] if k in SRC else k }}">{{ SRC[k][1] if k in SRC else k }}</span>{% endmacro %}
+
+{% macro netpill(e) %}<span class="pill net-{{ e.network | lower }}">{{ e.network or '?' }}{% if e.country %} · {{ e.country }}{% endif %}</span>{% endmacro %}
+
+{% macro filterbar(action, f, opts=None, extra=None, full=True) %}
+<form method="get" action="{{ action }}" class="filters">
+  {% if extra %}{% for k, v in extra.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}{% endif %}
+  <label>Range
+    <select name="range">{% for r in RANGES %}<option value="{{ r }}" {{ 'selected' if f.range == r }}>{{ r }}</option>{% endfor %}
+      {% if f.range == 'custom' %}<option value="custom" selected>custom</option>{% endif %}</select></label>
+  <label>From <input type="date" name="from" value="{{ f['from'] }}"></label>
+  <label>To <input type="date" name="to" value="{{ f['to'] }}"></label>
+  {% if f.source %}<input type="hidden" name="source" value="{{ f.source }}">{% endif %}
+  <label>Network <select name="network"><option value="">all</option>
+    {% for o in ['LAN','Tailscale','Internet'] %}<option {{ 'selected' if f.network == o }}>{{ o }}</option>{% endfor %}</select></label>
+  {% if full and opts %}
+  <label>Service <select name="service"><option value="">all</option>{% for o in opts.service %}<option {{ 'selected' if f.service == o }}>{{ o }}</option>{% endfor %}</select></label>
+  <label>Category <select name="category"><option value="">all</option>{% for o in opts.category %}<option {{ 'selected' if f.category == o }}>{{ o }}</option>{% endfor %}</select></label>
+  <label>Country <select name="country"><option value="">all</option>{% for o in opts.country %}<option {{ 'selected' if f.country == o }}>{{ o }}</option>{% endfor %}</select></label>
+  <label>Device <select name="device"><option value="">all</option>{% for o in opts.device %}<option {{ 'selected' if f.device == o }}>{{ o }}</option>{% endfor %}</select></label>
+  <label>App <select name="app"><option value="">all</option>{% for o in opts.app %}<option {{ 'selected' if f.app == o }}>{{ o }}</option>{% endfor %}</select></label>
+  <label>Status <select name="status"><option value="">all</option>
+    {% for o in ['2xx','3xx','4xx','5xx','err'] %}<option value="{{ o }}" {{ 'selected' if f.status == o }}>{{ 'errors (4xx+5xx)' if o == 'err' else o }}</option>{% endfor %}</select></label>
+  <label>IP <input name="ip" value="{{ f.ip }}" size="14" placeholder="1.2.3.4"></label>
+  <label>Search <input name="q" value="{{ f.q }}" placeholder="path, host, UA, name"></label>
+  {% endif %}
+  <button class="btn">Apply</button> <a class="btn ghost" href="{{ action }}{% if extra %}?{{ extra | urlencode }}{% endif %}">Reset</a>
+</form>
+{% endmacro %}
+
+{% macro toptable(title, rows, dim, f, col="Name") %}
+<div class="card">
+  <h3><a href="/explore?{{ qs(f, dim=dim) }}">{{ title }}</a></h3>
+  <table class="t compact"><tr><th>{{ col }}</th><th class="r">Requests</th><th class="r">Clients</th></tr>
+  {% for r in rows %}
+  <tr><td class="clip" title="{{ r.v }}">{{ r.alias ~ ' · ' if r.alias and dim != 'client' }}{{ r.v }}</td>
+      <td class="r">{{ r.requests | num }}</td><td class="r">{{ r.clients | num }}</td></tr>
+  {% else %}<tr><td colspan="3" class="muted">No data</td></tr>{% endfor %}
+  </table>
+</div>
+{% endmacro %}
