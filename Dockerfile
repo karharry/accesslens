@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 DATA_DIR=/config TZ=UTC PORT=8089
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION} PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 DATA_DIR=/config TZ=UTC PORT=8089
 
 # ctcat: copy of `cat` holding only CAP_DAC_READ_SEARCH, used to read the root-only host conntrack table
 RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin \

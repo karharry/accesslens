@@ -23,7 +23,7 @@ import stats
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 BASE = os.path.dirname(__file__)
-VERSION = "1.2.0"
+VERSION = os.environ.get("APP_VERSION", "dev").lstrip("v")  # set from the git tag at image build time
 
 
 @asynccontextmanager

@@ -132,7 +132,7 @@ Everything else (SMTP, tokens, sources, labels) is configured in the web UI and 
 ## Updating, backup, reset
 
 ```bash
-docker compose pull && docker compose up -d      # update
+docker compose pull && docker compose up -d      # update to the newest release (`latest`)
 docker compose down                              # stop; data stays in ./config
 ```
 
