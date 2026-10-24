@@ -23,7 +23,7 @@ import stats
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 BASE = os.path.dirname(__file__)
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ async def lifespan(app):
     if not db.get("api_token"):
         db.put("api_token", secrets.token_urlsafe(32))
     ingest.backfill_network()
+    ingest.reclassify_ua()
     ingest.start_background()
     conntrack.start()
     mailer.start_scheduler()

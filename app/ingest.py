@@ -65,6 +65,24 @@ def network_of(ip: str, source: str, local: int) -> str:
     return "LAN" if local else "Internet"
 
 
+UA_PARSER_VERSION = "2"
+
+
+def reclassify_ua():
+    """Re-derive device/os/app for stored events when the user-agent parser improves."""
+    if db.get("ua_parser_version") == UA_PARSER_VERSION:
+        return
+    changed = 0
+    for r in db.q("SELECT DISTINCT ua FROM events WHERE ua<>''"):
+        device, os_, app = uaparse.parse(r["ua"])
+        cur = db.ex("UPDATE events SET device=?, os=?, app=? WHERE ua=? AND (device<>? OR os<>? OR app<>?)",
+                    (device, os_, app, r["ua"], device, os_, app))
+        changed += cur.rowcount
+    db.put("ua_parser_version", UA_PARSER_VERSION)
+    if changed:
+        log.info("re-classified %d stored events with the updated user-agent parser", changed)
+
+
 def backfill_network():
     """Fill the network column for rows written before it existed."""
     for r in db.q("SELECT DISTINCT ip, source FROM events WHERE network=''"):

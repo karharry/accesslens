@@ -9,6 +9,18 @@ _APPS = [
     (r"Home ?Assistant", lambda m: "Home Assistant"),
     (r"Tautulli|Sonarr|Radarr|Lidarr|Bazarr|Prowlarr|Whisparr|Jackett|Overseerr|Seerr|Navidrome|Immich|Syncthing|Prometheus|Grafana|Uptime-Kuma|Homepage|Dockhand|Beszel|Glances|NetAlertX|FreshRSS|Linkwarden",
      lambda m: m.group(0)),
+    (r"Palo Alto Networks|Cortex[- ]Xpanse|Expanse", lambda m: "Scanner: Palo Alto Xpanse"),
+    (r"CensysInspect|Censys", lambda m: "Scanner: Censys"),
+    (r"Shodan", lambda m: "Scanner: Shodan"),
+    (r"zgrab|ZGrab", lambda m: "Scanner: ZGrab"),
+    (r"masscan", lambda m: "Scanner: masscan"),
+    (r"Nmap(?: Scripting Engine)?", lambda m: "Scanner: Nmap"),
+    (r"[Nn]uclei", lambda m: "Scanner: Nuclei"),
+    (r"[Nn]ikto", lambda m: "Scanner: Nikto"),
+    (r"sqlmap", lambda m: "Scanner: sqlmap"),
+    (r"l9explore|l9tcpid|LeakIX", lambda m: "Scanner: LeakIX"),
+    (r"InternetMeasurement|Internet-Measurement|NetSystemsResearch|Expanse|BinaryEdge|ALittle Client",
+     lambda m: "Scanner: internet survey"),
     (r"Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|AhrefsBot|SemrushBot|MJ12bot|facebookexternalhit|[Bb]ot/|[Cc]rawler|[Ss]pider",
      lambda m: "Bot/Crawler"),
     (r"curl/", lambda m: "curl"),
@@ -77,11 +89,11 @@ def _parse(ua):
         os_, device = "TV OS", "Smart TV"
     elif "linux" in low or "x11" in low:
         os_, device = "Linux", "Linux PC"
+    if app.startswith("Scanner:") or app == "Bot/Crawler":
+        device = "Bot"
     if device == "Unknown":
         if app in ("curl", "wget", "Python client", "Go client", "Node client"):
             device = "Script/CLI"
-        elif app == "Bot/Crawler":
-            device = "Bot"
         elif app in ("Home Assistant", "Prometheus", "Uptime-Kuma", "Homepage", "Glances", "Beszel", "NetAlertX", "Grafana"):
             device = "Service/Monitor"
     return (device, os_, app)
