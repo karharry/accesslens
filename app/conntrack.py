@@ -46,6 +46,9 @@ def read_table() -> str:
         r = subprocess.run([READER, PATH], capture_output=True, timeout=20)
     except FileNotFoundError:
         raise RuntimeError("helper 'ctcat' missing from the image.")
+    except OSError as e:  # exec refused: the container lacks the DAC_READ_SEARCH capability
+        raise RuntimeError("cannot read the conntrack table - add cap_add: [DAC_READ_SEARCH] (and "
+                           f"network_mode: host). ({e.strerror})")
     if r.returncode != 0:
         err = r.stderr.decode(errors="replace").strip()
         raise RuntimeError("cannot read the conntrack table - add cap_add: [DAC_READ_SEARCH] (and "

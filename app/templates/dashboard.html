@@ -6,7 +6,7 @@
 {{ filterbar("/", f, None, None, False) }}
 {{ sourcetabs("/", f) }}
 
-<div class="panels">
+<div class="panels" id="d-sources">
 {% for p in panels %}
   <div class="card panel s-{{ p.key }} {{ 'sel' if f.source == p.key }}">
     <h3><i class="sdot s-{{ p.key }}"></i>{{ p.name }}</h3>
@@ -26,7 +26,7 @@
 {% endfor %}
 </div>
 
-<div class="kpis">
+<div class="kpis" id="d-kpis">
   <div class="kpi"><b>{{ s.total | num }}</b><span>{{ 'Connections' if f.source == 'connection' else ('Requests' if f.source else 'Events (all sources)') }}</span></div>
   <div class="kpi"><b>{{ s.ips | num }}</b><span>Unique clients</span></div>
   <div class="kpi"><b>{{ s.local | num }}</b><span>Local requests</span></div>
@@ -36,7 +36,7 @@
   <div class="kpi"><b>{{ s.bytes | nbytes }}</b><span>Transferred</span></div>
 </div>
 
-<div class="grid2">
+<div class="grid2" id="d-traffic">
   <div class="card">
     <h3>Traffic over time <span class="legend"><i class="c-local"></i>local <i class="c-remote"></i>remote</span></h3>
     <div id="ts-chart" class="chart" data-qs="{{ qs(f) }}"></div>
@@ -48,14 +48,14 @@
   </div>
 </div>
 
-<div class="card">
+<div class="card" id="d-latest">
   <h3>Latest requests <a class="small" href="/events">all events →</a></h3>
   <div class="scroll"><table class="t compact" id="live-table">
     <thead><tr><th>Time</th><th>Source</th><th>Service</th><th>Client</th><th>Network</th><th>Device / app</th><th>Request</th><th>St.</th></tr></thead>
     <tbody></tbody></table></div>
 </div>
 
-<div class="grid3">
+<div class="grid3" id="d-top">
   {{ toptable("Network path", nets, "network", f, "Path") }}
   {{ toptable("Top services", top.service, "service", f, "Service") }}
   {{ toptable("Top clients", top.client, "client", f, "Client") }}
@@ -65,7 +65,7 @@
   {{ toptable("Countries", top.country, "country", f, "Country") }}
 </div>
 
-<div class="card">
+<div class="card" id="d-heat">
   <h3>When is it busy? <small class="muted">weekday × hour ({{ f.range }})</small></h3>
   {% set mx = heat | map('max') | max %}
   <div class="heat">

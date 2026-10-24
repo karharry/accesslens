@@ -2,7 +2,7 @@
 {% block title %}Users · AccessLens{% endblock %}
 {% block content %}
 <h1>Users</h1>
-<div class="card scroll">
+<div class="card scroll" id="u-list">
 <table class="t">
   <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Last login</th><th>Actions</th></tr></thead>
   {% for u in users %}
@@ -24,7 +24,7 @@
   {% endfor %}
 </table>
 </div>
-<div class="card narrow">
+<div class="card narrow" id="u-create">
   <h3>Create user</h3>
   <form method="post" action="/users/create">
     <input type="hidden" name="csrf" value="{{ csrf }}">

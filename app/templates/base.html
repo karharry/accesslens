@@ -15,14 +15,32 @@
     <div class="brand"><img src="/static/icon.svg" width="26" height="26" alt=""> AccessLens</div>
     <button type="button" class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false">☰</button>
   </div>
-  <nav>
-    {% set items = [('dashboard','/','Dashboard'),('events','/events','Events'),('explore','/explore','Explore'),
-       ('aggregate','/aggregate','Aggregate'),('insights','/insights','Insights'),('uptime','/uptime','Uptime')] %}
-    {% for k, href, label in items %}<a href="{{ href }}" class="{{ 'on' if page == k }}">{{ label }}</a>{% endfor %}
-    {% if user.role == 'admin' %}<hr>
-    <a href="/users" class="{{ 'on' if page == 'users' }}">Users</a>
-    <a href="/settings" class="{{ 'on' if page == 'settings' }}">Settings</a>{% endif %}
-    <a href="/account" class="{{ 'on' if page == 'account' }}">My account</a>
+  {% set SECTIONS = {
+    'dashboard': [('d-sources','Data sources'),('d-kpis','Summary'),('d-traffic','Traffic over time & live'),('d-latest','Latest requests'),('d-top','Top lists'),('d-heat','Busy hours')],
+    'insights': [('i-new','New clients'),('i-suspicious','Suspicious clients'),('i-wide','Remote clients, many services'),('i-errors','Services with errors'),('i-quiet','Gone quiet')],
+    'users': [('u-list','All users'),('u-create','Create user')],
+    'account': [('a-password','Change password'),('a-username','Username')],
+    'settings': [('s-sources','Log sources & filtering'),('s-connections','Direct connections'),('s-labels','Device names & categories'),('s-cloudflare','Cloudflare tunnel'),('s-email','Weekly email'),('s-probes','Uptime probes'),('s-api','Ingest API'),('s-danger','Danger zone')]
+  } %}
+  {% set NAV = [('dashboard','/','Dashboard',0),('events','/events','Events',0),('explore','/explore','Explore',0),
+       ('aggregate','/aggregate','Aggregate',0),('insights','/insights','Insights',0),('uptime','/uptime','Uptime',0)] %}
+  {% if user.role == 'admin' %}{% set NAV = NAV + [('users','/users','Users',1),('settings','/settings','Settings',0)] %}{% endif %}
+  {% set NAV = NAV + [('account','/account','My account',0)] %}
+  <nav id="sidenav">
+    {% for k, href, label, sep in NAV %}
+      {% if sep %}<hr>{% endif %}
+      {% if k in SECTIONS %}
+      <div class="navgroup {{ 'open' if page == k }}" data-nav="{{ k }}">
+        <div class="navrow">
+          <a href="{{ href }}" class="{{ 'on' if page == k }}">{{ label }}</a>
+          <button type="button" class="navtoggle" aria-label="Show {{ label }} sections" aria-expanded="{{ 'true' if page == k else 'false' }}">▸</button>
+        </div>
+        <div class="subnav">
+          {% for sid, stitle in SECTIONS[k] %}<a href="{{ href }}#{{ sid }}" data-section="{{ sid }}">{{ stitle }}</a>{% endfor %}
+        </div>
+      </div>
+      {% else %}<a href="{{ href }}" class="{{ 'on' if page == k }}">{{ label }}</a>{% endif %}
+    {% endfor %}
   </nav>
   <form method="post" action="/logout" class="who">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -40,7 +58,7 @@
 </div>{% endif %}
 <main class="{{ 'with-side' if user }}">
   {% if default_pw %}<div class="flash warn">You are still using the generated initial password. <a href="/account">Change it</a>.</div>{% endif %}
-  {% if msg %}<div class="flash {{ 'ok' if ok else 'bad' }}">{{ msg }}</div>{% endif %}
+  {% if msg %}<div class="flash toast {{ 'ok' if ok else 'bad' }}" role="status">{{ msg }}<button type="button" class="x" aria-label="Dismiss">×</button></div>{% endif %}
   {% block content %}{% endblock %}
 </main>
 <script src="/static/app.js?v={{ version }}"></script>

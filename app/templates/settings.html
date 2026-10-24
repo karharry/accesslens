@@ -4,7 +4,7 @@
 <h1>Settings</h1>
 <p class="muted">{{ dbstat.n | num }} events stored{% if dbstat.a %} ({{ dbstat.a | dt }} → {{ dbstat.b | dt }}){% endif %} · database {{ dbsize | nbytes }} · timezone <code>{{ tz }}</code></p>
 
-<form method="post" action="/settings/general" class="card">
+<form method="post" action="/settings/general" class="card" id="s-sources">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <h3>Log sources &amp; filtering</h3>
   <label>Log sources <small class="muted">one per line: <code>format|service label|path or glob</code>. Format is <code>npm</code>, <code>combined</code> (nginx/Apache) or <code>auto</code>. The label is only used for <code>combined</code> (NPM logs carry the host name). Rotated <code>.N.gz</code> files are imported once, on first start.</small>
@@ -22,7 +22,7 @@
   <button class="btn">Save</button>
 </form>
 
-<form method="post" action="/settings/connections" class="card">
+<form method="post" action="/settings/connections" class="card" id="s-connections">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <h3><i class="sdot s-connection"></i>Direct connections (host ports)</h3>
   <p class="muted small">Records TCP connections made straight to this host's IP addresses (LAN or Tailscale <code>ip:port</code>), i.e. traffic that never passes through NPM.
@@ -42,7 +42,7 @@
   <button class="btn">Save</button>
 </form>
 
-<form method="post" action="/settings/labels" class="card">
+<form method="post" action="/settings/labels" class="card" id="s-labels">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <h3>Device names &amp; service categories</h3>
   <div class="grid2">
@@ -54,7 +54,7 @@
   <button class="btn">Save</button>
 </form>
 
-<div class="card">
+<div class="card" id="s-cloudflare">
   <h3>Cloudflare tunnel traffic</h3>
   <p class="muted small">Tunnelled services never pass through NPM, so remote traffic is pulled from Cloudflare's GraphQL Analytics API.
   Create an API token (My Profile → API Tokens) with <b>Account Analytics: Read</b> and <b>Zone: Read</b> (or <b>Zone Analytics: Read</b>) permissions. Free plans keep roughly one day of detailed data, so it is polled continuously.</p>
@@ -75,7 +75,7 @@
   {% if s.cf_status %}<p class="muted small">Last status: {{ s.cf_status }}</p>{% endif %}
 </div>
 
-<div class="card">
+<div class="card" id="s-email">
   <h3>Weekly email report</h3>
   <form method="post" action="/settings/email">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -105,7 +105,7 @@
   <p class="muted small">The report covers the previous Monday–Sunday. The SMTP password is stored in the database inside your config folder (readable only by the container user).</p>
 </div>
 
-<div class="card">
+<div class="card" id="s-probes">
   <h3>Uptime probes</h3>
   <table class="t compact">
     {% for p in probes %}<tr><td>{{ p.name }}</td><td class="clip">{{ p.url }}</td><td>{{ p.interval_s }}s</td>
@@ -123,7 +123,7 @@
   <p class="muted small">Any HTTP response below 500 counts as "up" (login-protected apps answer 401/403).</p>
 </div>
 
-<div class="card">
+<div class="card" id="s-api">
   <h3>Ingest API</h3>
   <p class="muted small">Other tools can push events: <code>POST /api/ingest</code> with <code>Authorization: Bearer &lt;token&gt;</code> and a JSON object or list with
   <code>service, ip, method, path, status, user_agent, bytes, country, ts</code> (all but <code>ip</code> optional).</p>
@@ -131,7 +131,7 @@
   <form method="post" action="/settings/token" data-confirm="Generate a new token? The old one stops working."><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost">Regenerate token</button></form>
 </div>
 
-<div class="card">
+<div class="card" id="s-danger">
   <h3>Danger zone</h3>
   <form method="post" action="/settings/purge" class="row" data-confirm="Delete ALL stored events?">
     <input type="hidden" name="csrf" value="{{ csrf }}">
