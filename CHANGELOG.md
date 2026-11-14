@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-11-14
+
+### Fixed
+- Insights: tables no longer get clipped at the card edge (they scroll inside the card) and source/network pills no longer wrap onto two lines.
+- Insights: "New clients" now spans the full width above the other cards.
+
 ## [1.2.2] - 2026-10-25
 
 ### Changed
@@ -58,7 +64,9 @@ First release.
 - Light, dark and system themes; mobile layout.
 - Docker image for `linux/amd64` and `linux/arm64`, running as a non-root user with a bind-mounted `/config` folder.
 
-[Unreleased]: https://github.com/karharry/accesslens/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/karharry/accesslens/compare/v1.2.4...HEAD
+[1.2.4]: https://github.com/karharry/accesslens/compare/v1.2.3...v1.2.4
+[1.2.3]: https://github.com/karharry/accesslens/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/karharry/accesslens/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/karharry/accesslens/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/karharry/accesslens/compare/v1.1.0...v1.2.0
