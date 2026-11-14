@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import filterbar, sourcetabs, srcpill, netpill %}
+{% from "macros.html" import filterbar, sourcetabs, srcpill, netpill, iplink %}
 {% block title %}Events · AccessLens{% endblock %}
 {% block content %}
 <h1>Events <small class="muted">{{ total | num }} matching</small>
@@ -14,7 +14,7 @@
     <td class="nowrap">{{ e.ts | dt }}</td>
     <td>{{ srcpill(e.source) }}</td>
     <td><a href="/events?{{ qs(f, service=e.service) }}">{{ e.service }}</a></td>
-    <td class="nowrap"><a href="/events?{{ qs(f, ip=e.ip) }}">{{ e.ip }}</a>{% if e.alias %} <small class="muted">{{ e.alias }}</small>{% endif %}</td>
+    <td class="nowrap">{{ iplink(e.ip, "/events?" ~ qs(f, ip=e.ip)) }}{% if e.alias %} <small class="muted">{{ e.alias }}</small>{% endif %}</td>
     <td>{{ netpill(e) }}</td>
     <td>{{ e.device }}</td><td>{{ e.app }}</td>
     <td class="clip" title="{{ e.ua }}"><b>{{ e.method }}</b> {{ e.path }}{% if e.count > 1 %} <small class="muted">×{{ e.count }}</small>{% endif %}</td>

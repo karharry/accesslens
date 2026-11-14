@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import filterbar, sourcetabs, srcpill, netpill %}
+{% from "macros.html" import filterbar, sourcetabs, srcpill, netpill, iplink %}
 {% block title %}Insights · AccessLens{% endblock %}
 {% block content %}
 <h1>Insights</h1>
@@ -15,21 +15,21 @@ for those requests, so they all look like one local client. Publishing the proxy
 <div class="grid2">
 <div class="card" id="i-new"><h3>New clients <small class="muted">first ever seen in this range</small></h3>
 <table class="t compact"><tr><th>IP</th><th>Source</th><th>Network</th><th>App</th><th class="r">Events</th><th class="r">Svcs</th><th>First seen</th></tr>
-{% for r in i.new_ips %}<tr><td><a href="/events?ip={{ r.ip }}&range=all">{{ r.ip }}</a></td>
+{% for r in i.new_ips %}<tr><td>{{ iplink(r.ip, "/events?ip=" ~ r.ip ~ "&range=all") }}</td>
 <td>{{ srcpill(r.source) }}</td><td>{{ netpill(r) }}</td>
 <td>{{ r.app }}</td><td class="r">{{ r.requests | num }}</td><td class="r">{{ r.services }}</td><td>{{ r.first_seen | ago }}</td></tr>
 {% else %}<tr><td colspan="7" class="muted">No new clients.</td></tr>{% endfor %}</table></div>
 
 <div class="card" id="i-suspicious"><h3>Suspicious clients <small class="muted">≥10 denied (401/403) or ≥25 not-found</small></h3>
 <table class="t compact"><tr><th>IP</th><th>Where</th><th class="r">Req.</th><th class="r">Denied</th><th class="r">404</th><th class="r">Svcs</th></tr>
-{% for r in i.suspicious %}<tr><td><a href="/events?ip={{ r.ip }}&{{ qs(f) }}">{{ r.ip }}</a></td>
+{% for r in i.suspicious %}<tr><td>{{ iplink(r.ip, "/events?ip=" ~ r.ip ~ "&" ~ qs(f)) }}</td>
 <td>{{ netpill(r) }}</td>
 <td class="r">{{ r.requests | num }}</td><td class="r bad">{{ r.denied | num }}</td><td class="r">{{ r.notfound | num }}</td><td class="r">{{ r.services }}</td></tr>
 {% else %}<tr><td colspan="6" class="muted">Nothing suspicious.</td></tr>{% endfor %}</table></div>
 
 <div class="card" id="i-wide"><h3>Remote clients touching many services <small class="muted">≥4</small></h3>
 <table class="t compact"><tr><th>IP</th><th>Country</th><th class="r">Requests</th><th class="r">Services</th></tr>
-{% for r in i.wide_remote %}<tr><td><a href="/events?ip={{ r.ip }}&{{ qs(f) }}">{{ r.ip }}</a></td><td>{{ r.country or '–' }}</td>
+{% for r in i.wide_remote %}<tr><td>{{ iplink(r.ip, "/events?ip=" ~ r.ip ~ "&" ~ qs(f)) }}</td><td>{{ r.country or '–' }}</td>
 <td class="r">{{ r.requests | num }}</td><td class="r">{{ r.services }}</td></tr>
 {% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</table></div>
 

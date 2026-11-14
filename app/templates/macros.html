@@ -46,3 +46,5 @@
   </table>
 </div>
 {% endmacro %}
+
+{% macro iplink(ip, href) %}{% set ext = ip_lookup(ip) %}{% if ext %}<a href="{{ ext }}" target="_blank" rel="noopener noreferrer" title="Look up {{ ip }}">{{ ip }}</a>{% else %}<a href="{{ href }}">{{ ip }}</a>{% endif %}{% endmacro %}

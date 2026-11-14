@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-14
+
+### Added
+- Public IP addresses in the Events table and the Insights tables now open an IP lookup (whatismyipaddress.com) in a new tab. LAN, Tailscale and other non-public addresses still link to their events.
+
 ## [1.2.4] - 2026-11-14
 
 ### Fixed
@@ -64,7 +69,8 @@ First release.
 - Light, dark and system themes; mobile layout.
 - Docker image for `linux/amd64` and `linux/arm64`, running as a non-root user with a bind-mounted `/config` folder.
 
-[Unreleased]: https://github.com/karharry/accesslens/compare/v1.2.4...HEAD
+[Unreleased]: https://github.com/karharry/accesslens/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/karharry/accesslens/compare/v1.2.4...v1.3.0
 [1.2.4]: https://github.com/karharry/accesslens/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/karharry/accesslens/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/karharry/accesslens/compare/v1.2.1...v1.2.2

@@ -1,6 +1,7 @@
 """AccessLens web application."""
 import csv
 import io
+import ipaddress
 import logging
 import os
 import secrets
@@ -70,7 +71,15 @@ def _bytes(n):
 
 
 templates.env.filters.update(dt=_dt, ago=_ago, nbytes=_bytes, num=lambda n: f"{int(n or 0):,}")
-templates.env.globals.update(SRC=stats.SOURCES, SRC_SHORT={k: v[1] for k, v in stats.SOURCES.items()}, DIMS=stats.DIMS, RANGES=list(stats.RANGES), qs=stats.qs, version=VERSION,
+def _ip_lookup(ip):
+    # Public (globally routable) addresses only: LAN, Tailscale CGNAT and loopback stay as internal links.
+    try:
+        return f"https://whatismyipaddress.com/ip/{ip}" if ipaddress.ip_address(ip).is_global else None
+    except ValueError:
+        return None
+
+
+templates.env.globals.update(ip_lookup=_ip_lookup, SRC=stats.SOURCES, SRC_SHORT={k: v[1] for k, v in stats.SOURCES.items()}, DIMS=stats.DIMS, RANGES=list(stats.RANGES), qs=stats.qs, version=VERSION,
                              weekdays=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
 
 
